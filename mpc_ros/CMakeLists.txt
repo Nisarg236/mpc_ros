@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(mpc_ros)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_definitions(-std=c++11 -O3)
+add_definitions(-std=c++14 -O3 -DHAVE_CSTDDEF)
 
 # options for build configuration
 option(BUILD_EXAMPLE "Whether or not building the CppAD & Ipopt example" OFF) 
@@ -23,8 +23,18 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   visualization_msgs
+  mbf_costmap_core
+  mbf_msgs
+  pluginlib
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
 
+
+generate_dynamic_reconfigure_options(
+  cfg/MPCController.cfg
+)
 
 catkin_package(
    INCLUDE_DIRS include
@@ -63,6 +73,11 @@ target_link_libraries(Pure_Pursuit ${catkin_LIBRARIES})
 # Own Global planner for tracking desired trajectory
  add_library(global_planner_lib src/global_planner/global_planner.cpp)
  TARGET_LINK_LIBRARIES(global_planner_lib ipopt ${catkin_LIBRARIES} )
+
+# MPC controller plugin for move_base_flex
+add_library(mpc_ros_controller src/mpc_controller.cpp src/navMPC.cpp)
+add_dependencies(mpc_ros_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(mpc_ros_controller ipopt ${catkin_LIBRARIES})
 
 #############
 ## Example ##
